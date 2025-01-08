@@ -62,6 +62,8 @@ in_reverse = False
 clamp = True
 arm = False
 is_intake_go = False
+slow = False
+
 
 
 """
@@ -73,12 +75,16 @@ def toggle_intake():
         intake_pneumatics.open()"""
 
 def driver_controlled():
-    global brain, controller, in_reverse, drive_train, left_motors, right_motors, second_intake_motor, intake_pneumatics, intertial_sensor, gps_sensor, clamp, is_intake_go, arm
+    global brain, controller, in_reverse, drive_train, left_motors, right_motors, second_intake_motor, intake_pneumatics, intertial_sensor, gps_sensor, clamp, is_intake_go, arm, slow
     controller.rumble('-');
 
     def toggle_clamp():
         global clamp
         clamp = not clamp
+
+    def slow_down():
+        global slow
+        slow = not slow
 
     def toggle_reverse():
         global in_reverse
@@ -137,6 +143,7 @@ def driver_controlled():
     controller.buttonX.pressed(toggle_clamp)
     controller.buttonY.pressed(toggle_arm)
     controller.buttonB.pressed(toggle_reverse)
+    controller.buttonA.pressed(slow_down)
 
     controller.buttonR1.pressed(intake_normal)
     controller.buttonR2.pressed(intake_slow)
@@ -148,26 +155,25 @@ def driver_controlled():
     #controller.buttonB.pressed(toggle_intake)
     # controller.buttonX.pressed(toggle_reverse)
     while not time.sleep(.02):
+        global in_reverse, slow
         # Motion
         forward_motionL = controller.axis3.position()
-
-        forward_motion_as_decimal = float((forward_motionL)/100)
-        rotational_multiplier = .75 + (.25 * (1 - forward_motion_as_decimal)) # makes the bot less sensative to turns at high speeds, making it easier to control
-        rotational_motion = controller.axis1.position() * rotational_multiplier
-
         forward_motionR = controller.axis2.position()
-
-        forward_motion_as_decimal = float((forward_motionR)/100)
-        rotational_multiplier = .75 + (.25 * (1 - forward_motion_as_decimal)) # makes the bot less sensative to turns at high speeds, making it easier to control
-        rotational_motion = controller.axis1.position() * rotational_multiplier
 
         net_left_motion = forward_motionL
         net_right_motion = forward_motionR
-        
-        right_motors.set_velocity(net_left_motion, PERCENT) ## RENAME THESE VARIABLE TYPES LATER
-        left_motors.set_velocity(net_right_motion, PERCENT) 
-        left_motors.spin(FORWARD)
-        right_motors.spin(FORWARD)
+        if slow:
+            right_motors.set_velocity(net_left_motion/2, PERCENT) ## RENAME THESE VARIABLE TYPES LATER
+            left_motors.set_velocity(net_right_motion/2, PERCENT) 
+        else:
+            right_motors.set_velocity(net_left_motion, PERCENT)
+            left_motors.set_velocity(net_right_motion, PERCENT)
+        if in_reverse:
+            right_motors.spin(REVERSE)
+            left_motors.spin(REVERSE)
+        else:
+            left_motors.spin(FORWARD)
+            right_motors.spin(FORWARD)
 
         clamp_pneumatics.set(clamp)
         arm_pneumatics.set(arm)

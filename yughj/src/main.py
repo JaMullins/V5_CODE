@@ -43,11 +43,13 @@ drive_train = DriveTrain(
 )
 
 ##Subsystem Motor(s)
-intake_motor = Motor(Ports.PORT15)
+second_intake_motor = Motor(Ports.PORT15)
+first_intake_motor = Motor(Ports.PORT16)
 
 ## Pneumatics
 intake_pneumatics = DigitalOut(brain.three_wire_port.h)
 clamp_pneumatics = DigitalOut(brain.three_wire_port.a)
+arm_pneumatics = DigitalOut(brain.three_wire_port.b)
 """
 
 ## Sensors, require calibration
@@ -58,6 +60,7 @@ gps_sensor = Gps(Ports.PORT1)"""
 # Logic
 in_reverse = False
 clamp = True
+arm = False
 is_intake_go = False
 
 """def toggle_reverse():
@@ -76,24 +79,73 @@ def toggle_intake():
         intake_pneumatics.open()"""
 
 def driver_controlled():
-    global brain, controller, in_reverse, drive_train, left_motors, right_motors, intake_motor, intake_pneumatics, intertial_sensor, gps_sensor, clamp, is_intake_go
+    global brain, controller, in_reverse, drive_train, left_motors, right_motors, second_intake_motor, intake_pneumatics, intertial_sensor, gps_sensor, clamp, is_intake_go, arm
     controller.rumble('-');
 
     def toggle_clamp():
         global clamp
         clamp = not clamp
+
+    def toggle_arm():
+        global arm
+        arm = not arm
     
+    def intake_normal():
+        global is_intake_go
+        is_intake_go = not is_intake_go
+        if is_intake_go:
+            second_intake_motor.set_velocity(-250, RPM)
+            second_intake_motor.spin(FORWARD)
+            first_intake_motor.set_velocity(200, RPM)
+            first_intake_motor.spin(FORWARD)
+        else:
+            first_intake_motor.set_velocity(0, RPM)
+            second_intake_motor.set_velocity(0,RPM)
+
     def intake_slow():
         global is_intake_go
         is_intake_go = not is_intake_go
         if is_intake_go:
-            intake_motor.set_velocity(-350, RPM)
-            intake_motor.spin(FORWARD)
+            second_intake_motor.set_velocity(-50, RPM)
+            second_intake_motor.spin(FORWARD)
+            first_intake_motor.set_velocity(200, RPM)
+            first_intake_motor.spin(FORWARD)
         else:
-            intake_motor.set_velocity(0,RPM)
+            first_intake_motor.set_velocity(0, RPM)
+            second_intake_motor.set_velocity(0,RPM)
+
+    def intake_reverse():
+        global is_intake_go
+        is_intake_go = not is_intake_go
+        if is_intake_go:
+            second_intake_motor.set_velocity(100, RPM)
+            second_intake_motor.spin(FORWARD)
+            first_intake_motor.set_velocity(-80, RPM)
+            first_intake_motor.spin(FORWARD)
+        else:
+            first_intake_motor.set_velocity(0, RPM)
+            second_intake_motor.set_velocity(0,RPM)
+
+    def intake_first_stage():
+        global is_intake_go
+        is_intake_go = not is_intake_go
+        if is_intake_go:
+            first_intake_motor.set_velocity(200, RPM)
+            first_intake_motor.spin(FORWARD)
+        else:
+            first_intake_motor.set_velocity(0, RPM)
+            second_intake_motor.set_velocity(0,RPM)
 
     controller.buttonX.pressed(toggle_clamp)
-    controller.buttonR1.pressed(intake_slow)
+    controller.buttonY.pressed(toggle_arm)
+
+    controller.buttonR1.pressed(intake_normal)
+    controller.buttonR2.pressed(intake_slow)
+    controller.buttonL2.pressed(intake_reverse)
+    controller.buttonL1.pressed(intake_first_stage)
+
+
+
     #controller.buttonB.pressed(toggle_intake)
     # controller.buttonX.pressed(toggle_reverse)
     while not time.sleep(.02):
@@ -119,6 +171,9 @@ def driver_controlled():
         right_motors.spin(FORWARD)
 
         clamp_pneumatics.set(clamp)
+        arm_pneumatics.set(arm)
+        
+
         
 
         # Intake
@@ -127,7 +182,7 @@ def driver_controlled():
 
 
 def autonomous():
-    global brain, controller, drive_train, intake_motor, intake_pneumatics, intertial_sensor, gps_sensor
+    global brain, controller, drive_train, second_intake_motor, intake_pneumatics, intertial_sensor, gps_sensor
 
     raise NotImplementedError()
 
@@ -135,5 +190,3 @@ def autonomous():
 # competition = Competition(driver_controlled, autonomous)
 
 driver_controlled()
-
-        

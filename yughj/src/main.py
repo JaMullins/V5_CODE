@@ -63,12 +63,6 @@ clamp = True
 arm = False
 is_intake_go = False
 
-"""def toggle_reverse():
-    global in_reverse
-    in_reverse = not in_reverse
-"""
-
-
 
 """
 def toggle_intake():
@@ -85,6 +79,10 @@ def driver_controlled():
     def toggle_clamp():
         global clamp
         clamp = not clamp
+
+    def toggle_reverse():
+        global in_reverse
+        in_reverse = not in_reverse
 
     def toggle_arm():
         global arm
@@ -138,6 +136,7 @@ def driver_controlled():
 
     controller.buttonX.pressed(toggle_clamp)
     controller.buttonY.pressed(toggle_arm)
+    controller.buttonB.pressed(toggle_reverse)
 
     controller.buttonR1.pressed(intake_normal)
     controller.buttonR2.pressed(intake_slow)

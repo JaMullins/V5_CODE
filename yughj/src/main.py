@@ -1,8 +1,8 @@
 # ---------------------------------------------------------------------------- #
 #                                                                              #
 # 	Module:       main.py                                                      #
-# 	Author:       frankhowell                                                  #
-# 	Created:      10/23/2024, 8:17:33 AM                                       #
+# 	Author:       jack mullins                                                 #
+# 	Created:      1/15/2025 2:11 PM                                            #
 # 	Description:  V5 project                                                   #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
@@ -44,22 +44,28 @@ drive_train = DriveTrain(
 
 ##Subsystem Motor(s)
 second_intake_motor = Motor(Ports.PORT15)
-first_intake_motor = Motor(Ports.PORT16)
+first_intake_motor = Motor(Ports.PORT16, GearSetting.RATIO_6_1, REV)
 
 ## Pneumatics
 intake_pneumatics = DigitalOut(brain.three_wire_port.h)
 clamp_pneumatics = DigitalOut(brain.three_wire_port.a)
 arm_pneumatics = DigitalOut(brain.three_wire_port.b)
+
+
+
+intertial_sensor = Inertial(Ports.PORT14)
+
+
 """
 
 ## Sensors, require calibration
-intertial_sensor = Inertial(Ports.PORT1)
+
 gps_sensor = Gps(Ports.PORT1)"""
 
 
 # Logic
 in_reverse = False
-clamp = True
+clamp = False
 arm = False
 is_intake_go = False
 slow = False
@@ -162,12 +168,14 @@ def driver_controlled():
 
         net_left_motion = forward_motionL
         net_right_motion = forward_motionR
+
         if slow:
-            right_motors.set_velocity(net_left_motion/2, PERCENT) ## RENAME THESE VARIABLE TYPES LATER
-            left_motors.set_velocity(net_right_motion/2, PERCENT) 
+            right_motors.set_velocity(net_left_motion, RPM)
+            left_motors.set_velocity(net_right_motion, RPM)
         else:
             right_motors.set_velocity(net_left_motion, PERCENT)
             left_motors.set_velocity(net_right_motion, PERCENT)
+        
         if in_reverse:
             right_motors.spin(REVERSE)
             left_motors.spin(REVERSE)
@@ -187,11 +195,40 @@ def driver_controlled():
 
 
 def autonomous():
-    global brain, controller, drive_train, second_intake_motor, intake_pneumatics, intertial_sensor, gps_sensor
+    global brain, controller, drive_train, second_intake_motor, intake_pneumatics, intertial_sensor, gps_sensorm, left_motors, right_motors, clamp_pneumatics
+    intertial_sensor.calibrate()
+    intertial_sensor.set_rotation(0)
+    intertial_sensor.set_heading(0)
 
-    raise NotImplementedError()
+
+    drive_train.set_drive_velocity(31, PERCENT)
+    drive_train.drive(FORWARD)
+    time.sleep(1)
+    drive_train.stop()
+    clamp_pneumatics.set(True)
+    drive_train.set_turn_velocity(31, PERCENT)
+    drive_train.turn_for(45, DEGREES)
+
+    drive_train.set_drive_velocity(100,PERCENT)
+    drive_train.drive(FORWARD)
+    time.sleep(2)
+    drive_train.stop()
+
+    clamp_pneumatics.set(False)
+    drive_train.drive(REVERSE)
+    time.sleep(1.5)
+    drive_train.stop()
 
 
-# competition = Competition(driver_controlled, autonomous)
 
-driver_controlled()
+
+
+
+    
+
+
+#competition = Competition(driver_controlled, autonomous)
+
+#autonomous() ## UNCOMMENT THIS FOR AN AUTON RUN
+
+#driver_controlled() ## UNCOMMENT THIS FOR A DRIVER CONTROLLED RUN

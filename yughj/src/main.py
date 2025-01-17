@@ -44,7 +44,7 @@ drive_train = DriveTrain(
 
 ##Subsystem Motor(s)
 second_intake_motor = Motor(Ports.PORT15)
-first_intake_motor = Motor(Ports.PORT16, GearSetting.RATIO_6_1, REV)
+first_intake_motor = Motor(Ports.PORT16, REV) # CHANGED BACK TO 200RPM MOTOR ON WEDNESDAY 1-15
 
 ## Pneumatics
 intake_pneumatics = DigitalOut(brain.three_wire_port.h)
